@@ -1,1 +1,0 @@
-/Users/spacewoman/UnityProjects/VR_FirstAidTraining_Quest3S/VR_FirstAidTraining_Quest3S/Library/Bee/artifacts/Android/il2cppOutput/cpp
