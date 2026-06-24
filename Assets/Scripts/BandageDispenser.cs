@@ -9,23 +9,27 @@ public class BandageDispenser : MonoBehaviour
     public Transform tab;
     public float maxLength = 0.5f;
     public float stripWidth = 0.05f;
-    public GameObject appliedBandagePrefab;
+    public GameObject appliedBandagePrefab; // optional: only used if you still want a separate "applied to wound" object later
 
-    [Tooltip("The XRGrabInteractable on the tab itself, used to find which hand is holding it.")]
     public XRGrabInteractable tabGrabInteractable;
-
-    [Tooltip("Reference to the scene's XR Interaction Manager.")]
     public XRInteractionManager interactionManager;
 
     MeshFilter mf;
     Mesh stripMesh;
     bool isCut = false;
 
+    Rigidbody stripRb;
+    MeshCollider stripCollider;
+    XRGrabInteractable stripGrab;
+
     void Awake()
     {
         mf = GetComponent<MeshFilter>();
         stripMesh = new Mesh();
         mf.mesh = stripMesh;
+
+        var existingBox = GetComponent<BoxCollider>();
+        if (existingBox != null) existingBox.enabled = false; // only the strip's MeshCollider should be active, and only after cutting
     }
 
     void Update()
@@ -39,73 +43,130 @@ public class BandageDispenser : MonoBehaviour
             CutStrip();
     }
 
+    public int lengthSegments = 10;
+    public float sagAmount = 0.03f;   // how much it droops, scaled by slack
+    public float thickness = 0.01f;   // gives it real volume
+
     void UpdateStripMesh()
     {
-        Vector3 dir = (tab.position - exitPoint.position);
-        if (dir.sqrMagnitude < 0.0001f) return;
-        dir.Normalize();
+        Vector3 a = exitPoint.position;
+        Vector3 b = tab.position;
+        Vector3 dir = (b - a);
+        float dist = dir.magnitude;
+        if (dist < 0.0001f) return;
+        dir /= dist;
 
-        Vector3 up = Vector3.up;
-        if (Mathf.Abs(Vector3.Dot(dir, up)) > 0.95f) up = Vector3.forward;
-        Vector3 right = Vector3.Cross(dir, up).normalized * stripWidth * 0.5f;
+        Vector3 up = Mathf.Abs(Vector3.Dot(dir, Vector3.up)) > 0.95f ? Vector3.forward : Vector3.up;
+        Vector3 right = Vector3.Cross(dir, up).normalized;
+        Vector3 normal = Vector3.Cross(right, dir).normalized;
 
-        Vector3 p0 = exitPoint.position - right;
-        Vector3 p1 = exitPoint.position + right;
-        Vector3 p2 = tab.position - right;
-        Vector3 p3 = tab.position + right;
+        // sag more when slack (close together), less when pulled taut
+        float taut = Mathf.Clamp01(dist / maxLength);
+        float sag = sagAmount * (1f - taut);
 
-        Vector3[] verts = { p0, p1, p2, p3, p0, p1, p2, p3 };
+        int n = lengthSegments;
+        var verts = new Vector3[(n + 1) * 4]; // 4 verts per ring: top-left/right, bottom-left/right
+        var uv = new Vector2[verts.Length];
+        var trisList = new System.Collections.Generic.List<int>();
 
-        int[] tris = {
-            0, 2, 1,   1, 2, 3,
-            5, 6, 4,   7, 6, 5
-        };
+        for (int i = 0; i <= n; i++)
+        {
+            float t = i / (float)n;
+            Vector3 p = Vector3.Lerp(a, b, t);
+            p += -normal * sag * (4f * t * (1f - t));
 
-        Vector2[] uv = {
-            new(0,0), new(1,0), new(0,1), new(1,1),
-            new(0,0), new(1,0), new(0,1), new(1,1)
-        };
+            Vector3 r = right * stripWidth * 0.5f;
+            Vector3 th = normal * thickness * 0.5f;
+
+            int baseIdx = i * 4;
+            verts[baseIdx + 0] = transform.InverseTransformPoint(p - r + th);
+            verts[baseIdx + 1] = transform.InverseTransformPoint(p + r + th);
+            verts[baseIdx + 2] = transform.InverseTransformPoint(p - r - th);
+            verts[baseIdx + 3] = transform.InverseTransformPoint(p + r - th);
+
+            uv[baseIdx + 0] = new Vector2(0, t);
+            uv[baseIdx + 1] = new Vector2(1, t);
+            uv[baseIdx + 2] = new Vector2(0, t);
+            uv[baseIdx + 3] = new Vector2(1, t);
+
+            if (i < n)
+            {
+                int b0 = baseIdx, b1 = baseIdx + 4;
+                // top face
+                trisList.AddRange(new[] { b0, b1, b0 + 1, b0 + 1, b1, b1 + 1 });
+                // bottom face
+                trisList.AddRange(new[] { b0 + 2, b0 + 3, b1 + 2, b0 + 3, b1 + 3, b1 + 2 });
+                // side faces (left edge)
+                trisList.AddRange(new[] { b0, b0 + 2, b1, b0 + 2, b1 + 2, b1 });
+                // side faces (right edge)
+                trisList.AddRange(new[] { b0 + 1, b1, b0 + 3, b1, b1 + 1, b0 + 3 });
+            }
+        }
 
         stripMesh.Clear();
         stripMesh.vertices = verts;
-        stripMesh.triangles = tris;
+        stripMesh.triangles = trisList.ToArray();
         stripMesh.uv = uv;
         stripMesh.RecalculateNormals();
+        stripMesh.RecalculateBounds();
     }
 
     void CutStrip()
     {
         isCut = true;
 
-        // Figure out who's currently holding the tab BEFORE we deactivate anything
+        // 1. Find whoever is currently holding the tab
         IXRSelectInteractor holdingInteractor = null;
         if (tabGrabInteractable != null && tabGrabInteractable.isSelected)
         {
-            // grab the first interactor currently selecting the tab
             holdingInteractor = tabGrabInteractable.interactorsSelecting.Count > 0
                 ? tabGrabInteractable.interactorsSelecting[0]
                 : null;
         }
 
-        if (appliedBandagePrefab != null)
-        {
-            Vector3 midPoint = (exitPoint.position + tab.position) / 2f;
-            GameObject appliedBandage = Instantiate(appliedBandagePrefab, midPoint, tab.rotation);
+        // 2. Set up the strip's physics/grab BEFORE touching selection state
+        stripCollider = GetComponent<MeshCollider>();
+        if (stripCollider == null) stripCollider = gameObject.AddComponent<MeshCollider>();
+        stripCollider.sharedMesh = stripMesh;
+        stripCollider.convex = true;
 
-            // Hand the grab off to whoever was holding the tab
-            if (holdingInteractor != null && interactionManager != null)
-            {
-                var appliedGrab = appliedBandage.GetComponent<XRGrabInteractable>();
-                if (appliedGrab != null)
-                {
-                    // Force-release the tab first, then select the new object with the same interactor
-                    interactionManager.SelectExit(holdingInteractor, tabGrabInteractable);
-                    interactionManager.SelectEnter(holdingInteractor, appliedGrab);
-                }
-            }
+        stripRb = GetComponent<Rigidbody>();
+        if (stripRb == null) stripRb = gameObject.AddComponent<Rigidbody>();
+        stripRb.useGravity = true;
+        stripRb.isKinematic = false;
+        stripRb.linearDamping = 0.5f;
+        stripRb.angularDamping = 0.5f;
+
+        stripGrab = GetComponent<XRGrabInteractable>();
+        if (stripGrab == null) stripGrab = gameObject.AddComponent<XRGrabInteractable>();
+        stripGrab.throwOnDetach = true;
+        stripGrab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
+
+        // FIX 2: Set the attach transform so VelocityTracking doesn't apply massive torque
+        stripGrab.attachTransform = tab;
+
+        // 3. Hand off the grab WHILE the tab is still selected/enabled
+        if (holdingInteractor != null && interactionManager != null)
+        {
+            interactionManager.SelectExit(holdingInteractor, tabGrabInteractable);
+            interactionManager.SelectEnter(holdingInteractor, stripGrab);
         }
 
-        gameObject.SetActive(false); // hide the stretching strip
-        tab.gameObject.SetActive(false); // hide the tab too (optional)
+        // 4. FIX 1: completely strip the tab of physics to prevent self-intersection explosions
+        if (tab != null)
+        {
+            tab.SetParent(transform, worldPositionStays: true);
+
+            // Destroy the interactable completely instead of just disabling
+            if (tabGrabInteractable != null) Destroy(tabGrabInteractable);
+
+            // Destroy the Rigidbody entirely so it doesn't fight the parent Rigidbody
+            var tabRb = tab.GetComponent<Rigidbody>();
+            if (tabRb != null) Destroy(tabRb);
+
+            // Disable the tab's collider so it doesn't overlap the new MeshCollider
+            var tabCollider = tab.GetComponent<Collider>();
+            if (tabCollider != null) tabCollider.enabled = false;
+        }
     }
 }
