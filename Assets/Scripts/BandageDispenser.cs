@@ -142,31 +142,31 @@ public class BandageDispenser : MonoBehaviour
         stripGrab.throwOnDetach = true;
         stripGrab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
 
-        // FIX 2: Set the attach transform so VelocityTracking doesn't apply massive torque
-        stripGrab.attachTransform = tab;
+        // 3. Create a permanent attach point so we can safely delete the tab
+        if (tab != null)
+        {
+            GameObject attachPoint = new GameObject("BandageAttachPoint");
+            attachPoint.transform.SetParent(transform, false);
 
-        // 3. Hand off the grab WHILE the tab is still selected/enabled
+            // Copy the exact position and rotation of the tab
+            attachPoint.transform.position = tab.position;
+            attachPoint.transform.rotation = tab.rotation;
+
+            // Assign this new empty object as the grab anchor
+            stripGrab.attachTransform = attachPoint.transform;
+        }
+
+        // 4. Hand off the grab WHILE the tab is still selected/enabled
         if (holdingInteractor != null && interactionManager != null)
         {
             interactionManager.SelectExit(holdingInteractor, tabGrabInteractable);
             interactionManager.SelectEnter(holdingInteractor, stripGrab);
         }
 
-        // 4. FIX 1: completely strip the tab of physics to prevent self-intersection explosions
+        // 5. Safely destroy the tab completely
         if (tab != null)
         {
-            tab.SetParent(transform, worldPositionStays: true);
-
-            // Destroy the interactable completely instead of just disabling
-            if (tabGrabInteractable != null) Destroy(tabGrabInteractable);
-
-            // Destroy the Rigidbody entirely so it doesn't fight the parent Rigidbody
-            var tabRb = tab.GetComponent<Rigidbody>();
-            if (tabRb != null) Destroy(tabRb);
-
-            // Disable the tab's collider so it doesn't overlap the new MeshCollider
-            var tabCollider = tab.GetComponent<Collider>();
-            if (tabCollider != null) tabCollider.enabled = false;
+            Destroy(tab.gameObject);
         }
     }
 }
