@@ -7,6 +7,8 @@ public class WoundTriggerZone : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        Debug.Log($"Trigger entered by: {other.gameObject.name} | Tag: {other.gameObject.tag}");
+
         if (other.CompareTag(bandageTag))
             wrapDetector.BeginWrap(other.transform);
     }

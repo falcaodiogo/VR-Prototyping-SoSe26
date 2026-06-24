@@ -114,6 +114,7 @@ public class BandageDispenser : MonoBehaviour
     void CutStrip()
     {
         isCut = true;
+        gameObject.tag = "Bandage";
 
         // 1. Find whoever is currently holding the tab
         IXRSelectInteractor holdingInteractor = null;

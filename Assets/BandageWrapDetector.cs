@@ -29,14 +29,19 @@ public class BandageWrapDetector : MonoBehaviour
         lastDir = GetProjectedDir(bandageTransform.position);
         Debug.Log("begin wrap");
 
+        // Check immediately — handles requiredWrapAngle = 0 (testing) and protects
+        // against OnTriggerExit firing before the next Update tick.
+        if (accumulatedAngle >= requiredWrapAngle)
+            CompleteWrap();
     }
 
     public void EndWrap()
     {
         isWrapping = false;
-        trackedObject = null;
+        // keep trackedObject around briefly instead of nulling immediately,
+        // OR just don't reset accumulatedAngle here (you already don't) so
+        // re-entering resumes progress instead of restarting from scratch.
         Debug.Log("end wrap");
-
     }
 
     void Update()
@@ -73,11 +78,12 @@ public class BandageWrapDetector : MonoBehaviour
         isWrapping = false;
 
         if (trackedObject != null)
-            trackedObject.gameObject.SetActive(false); // remove the loose strip being held
+            trackedObject.gameObject.SetActive(false);
 
         if (finalAppliedBandagePrefab != null && attachPointOnLimb != null)
         {
-            Instantiate(finalAppliedBandagePrefab, attachPointOnLimb.position, attachPointOnLimb.rotation, attachPointOnLimb);
+            GameObject bandage = Instantiate(finalAppliedBandagePrefab, attachPointOnLimb.position, attachPointOnLimb.rotation, attachPointOnLimb);
+            bandage.SetActive(true); // <-- force it on, in case the prefab was saved disabled
         }
 
         Debug.Log("Bandage wrap complete!");
