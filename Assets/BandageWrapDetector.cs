@@ -82,7 +82,7 @@ public class BandageWrapDetector : MonoBehaviour
 
         if (finalAppliedBandagePrefab != null && attachPointOnLimb != null)
         {
-            GameObject bandage = Instantiate(finalAppliedBandagePrefab, attachPointOnLimb.position, attachPointOnLimb.rotation, attachPointOnLimb);
+            GameObject bandage = Instantiate(finalAppliedBandagePrefab, attachPointOnLimb);
             bandage.SetActive(true); // <-- force it on, in case the prefab was saved disabled
         }
 

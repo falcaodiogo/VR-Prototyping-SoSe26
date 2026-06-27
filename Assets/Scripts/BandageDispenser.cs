@@ -9,7 +9,7 @@ public class BandageDispenser : MonoBehaviour
     public Transform tab;
     public float maxLength = 0.5f;
     public float stripWidth = 0.05f;
-    public GameObject appliedBandagePrefab; // optional: only used if you still want a separate "applied to wound" object later
+    public GameObject appliedBandagePrefab;
 
     public XRGrabInteractable tabGrabInteractable;
     public XRInteractionManager interactionManager;
@@ -19,7 +19,6 @@ public class BandageDispenser : MonoBehaviour
     bool isCut = false;
 
     Rigidbody stripRb;
-    MeshCollider stripCollider;
     XRGrabInteractable stripGrab;
 
     void Awake()
@@ -28,8 +27,9 @@ public class BandageDispenser : MonoBehaviour
         stripMesh = new Mesh();
         mf.mesh = stripMesh;
 
+        // Disable existing BoxCollider during dispensing so it doesn't block the hand early
         var existingBox = GetComponent<BoxCollider>();
-        if (existingBox != null) existingBox.enabled = false; // only the strip's MeshCollider should be active, and only after cutting
+        if (existingBox != null) existingBox.enabled = false;
     }
 
     void Update()
@@ -43,9 +43,9 @@ public class BandageDispenser : MonoBehaviour
             CutStrip();
     }
 
-    public int lengthSegments = 10;
-    public float sagAmount = 0.03f;   // how much it droops, scaled by slack
-    public float thickness = 0.01f;   // gives it real volume
+    public int lengthSegments = 30;
+    public float sagAmount = 0.03f;
+    public float thickness = 0.01f;
 
     void UpdateStripMesh()
     {
@@ -60,12 +60,11 @@ public class BandageDispenser : MonoBehaviour
         Vector3 right = Vector3.Cross(dir, up).normalized;
         Vector3 normal = Vector3.Cross(right, dir).normalized;
 
-        // sag more when slack (close together), less when pulled taut
         float taut = Mathf.Clamp01(dist / maxLength);
         float sag = sagAmount * (1f - taut);
 
         int n = lengthSegments;
-        var verts = new Vector3[(n + 1) * 4]; // 4 verts per ring: top-left/right, bottom-left/right
+        var verts = new Vector3[(n + 1) * 4];
         var uv = new Vector2[verts.Length];
         var trisList = new System.Collections.Generic.List<int>();
 
@@ -92,13 +91,9 @@ public class BandageDispenser : MonoBehaviour
             if (i < n)
             {
                 int b0 = baseIdx, b1 = baseIdx + 4;
-                // top face
                 trisList.AddRange(new[] { b0, b1, b0 + 1, b0 + 1, b1, b1 + 1 });
-                // bottom face
                 trisList.AddRange(new[] { b0 + 2, b0 + 3, b1 + 2, b0 + 3, b1 + 3, b1 + 2 });
-                // side faces (left edge)
                 trisList.AddRange(new[] { b0, b0 + 2, b1, b0 + 2, b1 + 2, b1 });
-                // side faces (right edge)
                 trisList.AddRange(new[] { b0 + 1, b1, b0 + 3, b1, b1 + 1, b0 + 3 });
             }
         }
@@ -125,11 +120,19 @@ public class BandageDispenser : MonoBehaviour
                 : null;
         }
 
-        // 2. Set up the strip's physics/grab BEFORE touching selection state
-        stripCollider = GetComponent<MeshCollider>();
-        if (stripCollider == null) stripCollider = gameObject.AddComponent<MeshCollider>();
-        stripCollider.sharedMesh = stripMesh;
-        stripCollider.convex = true;
+        // 2. Set up the strip's physics/grab using a padded primitive collider
+        BoxCollider grabCollider = GetComponent<BoxCollider>();
+        if (grabCollider == null) grabCollider = gameObject.AddComponent<BoxCollider>();
+
+        grabCollider.enabled = true;
+        grabCollider.center = stripMesh.bounds.center;
+
+        // Grab the actual mesh bounds, but inflate the thickness (Y) and width (X) to make grabbing easy
+        Vector3 paddedSize = stripMesh.bounds.size;
+        paddedSize.x = Mathf.Max(paddedSize.x, stripWidth * 1.5f); // 50% wider
+        paddedSize.y = Mathf.Max(paddedSize.y, 0.05f); // Force thickness to at least 5cm
+        paddedSize.z = Mathf.Max(paddedSize.z, 0.05f);
+        grabCollider.size = paddedSize;
 
         stripRb = GetComponent<Rigidbody>();
         if (stripRb == null) stripRb = gameObject.AddComponent<Rigidbody>();
@@ -137,11 +140,17 @@ public class BandageDispenser : MonoBehaviour
         stripRb.isKinematic = false;
         stripRb.linearDamping = 0.5f;
         stripRb.angularDamping = 0.5f;
+        // Fix for falling through the floor
+        stripRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         stripGrab = GetComponent<XRGrabInteractable>();
         if (stripGrab == null) stripGrab = gameObject.AddComponent<XRGrabInteractable>();
         stripGrab.throwOnDetach = true;
         stripGrab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
+
+        // Ensure XR Toolkit relies strictly on our new padded box
+        stripGrab.colliders.Clear();
+        stripGrab.colliders.Add(grabCollider);
 
         // 3. Create a permanent attach point so we can safely delete the tab
         if (tab != null)
@@ -149,11 +158,9 @@ public class BandageDispenser : MonoBehaviour
             GameObject attachPoint = new GameObject("BandageAttachPoint");
             attachPoint.transform.SetParent(transform, false);
 
-            // Copy the exact position and rotation of the tab
             attachPoint.transform.position = tab.position;
             attachPoint.transform.rotation = tab.rotation;
 
-            // Assign this new empty object as the grab anchor
             stripGrab.attachTransform = attachPoint.transform;
         }
 

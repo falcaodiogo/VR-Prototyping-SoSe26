@@ -6553,7 +6553,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d19d8ac52b96c4260b1a8e44d69d8eeb, type: 2}
+  - {fileID: 2100000, guid: e9e79d85b56a60a459df32fa7b4e7793, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -10881,12 +10881,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   exitPoint: {fileID: 622939525}
   tab: {fileID: 438681149}
-  maxLength: 0.3
+  maxLength: 0.5
   stripWidth: 0.05
   appliedBandagePrefab: {fileID: 438681145}
   tabGrabInteractable: {fileID: 0}
   interactionManager: {fileID: 0}
-  lengthSegments: 1
+  lengthSegments: 10
   sagAmount: 0.03
   thickness: 0.01
 --- !u!33 &978457653
@@ -11165,10 +11165,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 23448197922942252, guid: f2eb86ba579ab5c4db54a92a8f0c3b7b, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: d19d8ac52b96c4260b1a8e44d69d8eeb, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
