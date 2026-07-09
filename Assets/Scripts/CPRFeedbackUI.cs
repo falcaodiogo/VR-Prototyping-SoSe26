@@ -5,8 +5,14 @@ using TMPro;
 /// <summary>
 /// Screen-space (overlay) UI that:
 ///  1. Shows live CPR feedback text/color based on CPRCompressionTracker events.
-///  2. Drives a constant 110 BPM visual pulse + tick sound as a rhythm guide,
-///     independent of the player's actual performance.
+///  2. Drives a 110 BPM visual pulse + tick sound as a rhythm guide, but ONLY
+///     while explicitly enabled (see SetMetronomeEnabled) — it no longer runs
+///     continuously regardless of zone/phase state.
+///  3. Shows/hides an end-of-round summary panel.
+///
+/// Phase/flow orchestration (when to enable the metronome, when to show the
+/// summary, when to switch to music) lives in CPRSessionManager. This class
+/// only knows how to render what it's told to render.
 /// </summary>
 public class CPRFeedbackUI : MonoBehaviour
 {
@@ -24,6 +30,12 @@ public class CPRFeedbackUI : MonoBehaviour
     [SerializeField] private float pulseScale = 1.3f;
     [SerializeField] private float pulseDuration = 0.12f;
 
+    [Header("Summary Panel")]
+    [SerializeField] private GameObject summaryPanel;
+    [SerializeField] private TextMeshProUGUI summaryText;
+
+    private CanvasGroup summaryCanvasGroup;
+
     [Header("Colors")]
     [SerializeField] private Color colorGood = new Color(0.2f, 0.8f, 0.3f);
     [SerializeField] private Color colorSlow = new Color(0.95f, 0.8f, 0.1f);
@@ -34,6 +46,9 @@ public class CPRFeedbackUI : MonoBehaviour
     private Vector3 metronomeBaseScale;
     private float pulseTimer;
 
+    /// <summary>True only while the session manager wants the beep guide running.</summary>
+    private bool metronomeEnabled;
+
     private void Awake()
     {
         if (metronomeIcon != null)
@@ -41,6 +56,12 @@ public class CPRFeedbackUI : MonoBehaviour
 
         if (popupGroup != null)
             popupGroup.alpha = 0f;
+
+        if (summaryPanel != null)
+        {
+            summaryCanvasGroup = summaryPanel.GetComponent<CanvasGroup>();
+            summaryPanel.SetActive(false);
+        }
     }
 
     private void OnEnable()
@@ -63,11 +84,37 @@ public class CPRFeedbackUI : MonoBehaviour
 
     private void Update()
     {
-        DriveMetronome();
+        if (metronomeEnabled)
+            DriveMetronome();
+
         AnimatePulseDecay();
     }
 
-    // ---------------- Metronome (constant 110 BPM guide) ----------------
+    // ---------------- Metronome (guide beep, externally gated) ----------------
+
+    /// <summary>
+    /// Called by CPRSessionManager to turn the beep guide on/off (e.g. only
+    /// while the hand is in the zone during the beep phase, and never during
+    /// the music phase).
+    /// </summary>
+    public void SetMetronomeEnabled(bool enabled)
+    {
+        if (metronomeEnabled == enabled) return;
+
+        metronomeEnabled = enabled;
+        metronomeTimer = 0f;
+
+        if (!enabled)
+        {
+            // Snap the icon back and make sure no tick keeps ringing out.
+            pulseTimer = 0f;
+            if (metronomeIcon != null)
+                metronomeIcon.localScale = metronomeBaseScale;
+
+            if (metronomeAudioSource != null)
+                metronomeAudioSource.Stop();
+        }
+    }
 
     private void DriveMetronome()
     {
@@ -108,12 +155,19 @@ public class CPRFeedbackUI : MonoBehaviour
 
     private void HandleZoneChanged(bool entered)
     {
-        if (popupGroup == null) return;
-        popupGroup.alpha = entered ? 1f : 0f;
+        SetPopupVisible(entered);
 
         if (entered)
             SetMessage("Start compressions...", colorNeutral);
     }
+
+    public void SetPopupVisible(bool visible)
+    {
+        if (popupGroup == null) return;
+        popupGroup.alpha = visible ? 1f : 0f;
+    }
+
+    public void HidePopup() => SetPopupVisible(false);
 
     private void HandleFeedback(CPRFeedbackType type, float bpm)
     {
@@ -148,5 +202,48 @@ public class CPRFeedbackUI : MonoBehaviour
 
         if (popupBackground != null)
             popupBackground.color = color;
+    }
+
+    // ---------------- Summary panel ----------------
+
+    /// <summary>
+    /// Shows the end-of-round score and hides the instructions/feedback popup
+    /// at the same time, per the requested flow.
+    /// </summary>
+    public void ShowSummary(CPRSessionSummary summary, string title, string extraLine = null)
+    {
+        HidePopup();
+
+        if (summaryPanel != null)
+            summaryPanel.SetActive(true);
+
+        if (summaryCanvasGroup != null)
+        {
+            summaryCanvasGroup.alpha = 1f;
+            summaryCanvasGroup.interactable = true;
+            summaryCanvasGroup.blocksRaycasts = true;
+        }
+
+        if (summaryText != null)
+        {
+            string text =
+                $"{title}\n\n" +
+                $"Compressions: {summary.totalCompressions}\n" +
+                $"Accuracy: {summary.GoodPercentage:0}%";
+
+            if (!string.IsNullOrEmpty(extraLine))
+                text += $"\n{extraLine}";
+
+            summaryText.text = text;
+        }
+    }
+
+    public void HideSummary()
+    {
+        if (summaryPanel != null)
+            summaryPanel.SetActive(false);
+
+        if (summaryCanvasGroup != null)
+            summaryCanvasGroup.alpha = 0f;
     }
 }
