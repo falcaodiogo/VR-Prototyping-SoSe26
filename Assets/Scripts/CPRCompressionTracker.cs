@@ -13,8 +13,35 @@ public enum CPRFeedbackType
 }
 
 /// <summary>
+/// Result snapshot of a CPR attempt, used to render the end-of-session summary.
+/// </summary>
+public struct CPRSessionSummary
+{
+    public int totalCompressions;
+    public int goodCount;
+    public int tooSlowCount;
+    public int tooFastCount;
+    public int notEnoughDepthCount;
+
+    /// <summary>
+    /// % of BPM-evaluated compressions that landed in the "Good" range.
+    /// (NotEnoughDepth beats aren't counted since no BPM was ever assessed for them.)
+    /// </summary>
+    public float GoodPercentage
+    {
+        get
+        {
+            int evaluated = goodCount + tooSlowCount + tooFastCount;
+            return evaluated > 0 ? (goodCount / (float)evaluated) * 100f : 0f;
+        }
+    }
+}
+
+/// <summary>
 /// Tracks vertical hand movement while inside the CPR zone, detects compression
 /// "beats" (the bottom of each downward push), and computes a rolling BPM estimate.
+/// Also accumulates per-session stats (compression count + BPM quality tally) so
+/// the UI can unlock a "stop" action and show a results summary.
 /// </summary>
 public class CPRCompressionTracker : MonoBehaviour
 {
@@ -40,6 +67,7 @@ public class CPRCompressionTracker : MonoBehaviour
     public event Action<CPRFeedbackType, float> OnFeedback; // feedback type + current bpm (bpm may be 0)
     public event Action OnCompressionBeat;                // fires exactly once per detected compression (good hook for SFX/haptics)
     public event Action<bool> OnHandInZoneChanged;         // true = entered, false = exited
+    public event Action<int> OnCompressionCountChanged;    // fires with running total compression count for this session
 
     private Transform handTransform;
     private bool handInZone = false;
@@ -52,7 +80,15 @@ public class CPRCompressionTracker : MonoBehaviour
     private readonly List<float> compressionTimestamps = new List<float>();
     private float lastCompressionTime;
 
+    // --- Session stats ---
+    private int totalCompressions;
+    private int goodCount;
+    private int tooSlowCount;
+    private int tooFastCount;
+    private int notEnoughDepthCount;
+
     public bool IsHandInZone => handInZone;
+    public int TotalCompressions => totalCompressions;
 
     public void OnHandEnterZone(Transform hand)
     {
@@ -74,6 +110,33 @@ public class CPRCompressionTracker : MonoBehaviour
         compressionTimestamps.Clear();
         OnHandInZoneChanged?.Invoke(false);
         OnFeedback?.Invoke(CPRFeedbackType.None, 0f);
+    }
+
+    /// <summary>
+    /// Clears all session stats and timestamp history. Call this whenever a fresh
+    /// CPR attempt begins (e.g. once the player has picked Music/Metronome mode).
+    /// </summary>
+    public void ResetSession()
+    {
+        compressionTimestamps.Clear();
+        totalCompressions = 0;
+        goodCount = 0;
+        tooSlowCount = 0;
+        tooFastCount = 0;
+        notEnoughDepthCount = 0;
+        OnCompressionCountChanged?.Invoke(totalCompressions);
+    }
+
+    public CPRSessionSummary GetSessionSummary()
+    {
+        return new CPRSessionSummary
+        {
+            totalCompressions = totalCompressions,
+            goodCount = goodCount,
+            tooSlowCount = tooSlowCount,
+            tooFastCount = tooFastCount,
+            notEnoughDepthCount = notEnoughDepthCount
+        };
     }
 
     private void Update()
@@ -113,6 +176,7 @@ public class CPRCompressionTracker : MonoBehaviour
             }
             else
             {
+                notEnoughDepthCount++;
                 OnFeedback?.Invoke(CPRFeedbackType.NotEnoughDepth, GetCurrentBPM());
             }
 
@@ -131,7 +195,9 @@ public class CPRCompressionTracker : MonoBehaviour
         if (compressionTimestamps.Count > rollingWindowSize)
             compressionTimestamps.RemoveAt(0);
 
+        totalCompressions++;
         OnCompressionBeat?.Invoke();
+        OnCompressionCountChanged?.Invoke(totalCompressions);
 
         if (compressionTimestamps.Count >= 2)
         {
@@ -154,14 +220,29 @@ public class CPRCompressionTracker : MonoBehaviour
     private void EvaluateBPM(float bpm)
     {
         if (bpm < acceptableMin)
+        {
+            tooSlowCount++;
             OnFeedback?.Invoke(CPRFeedbackType.TooSlow, bpm);
+        }
         else if (bpm > acceptableMax)
+        {
+            tooFastCount++;
             OnFeedback?.Invoke(CPRFeedbackType.TooFast, bpm);
+        }
         else if (bpm >= idealMin && bpm <= idealMax)
+        {
+            goodCount++;
             OnFeedback?.Invoke(CPRFeedbackType.Good, bpm);
+        }
         else if (bpm < idealMin)
+        {
+            tooSlowCount++;
             OnFeedback?.Invoke(CPRFeedbackType.TooSlow, bpm);
+        }
         else
+        {
+            tooFastCount++;
             OnFeedback?.Invoke(CPRFeedbackType.TooFast, bpm);
+        }
     }
 }

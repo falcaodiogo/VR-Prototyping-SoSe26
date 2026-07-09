@@ -123,10 +123,10 @@ public class CPRFeedbackUI : MonoBehaviour
                 SetMessage($"Good rhythm! {bpm:0} BPM", colorGood);
                 break;
             case CPRFeedbackType.TooSlow:
-                SetMessage($"Too slow — push faster! {bpm:0} BPM", colorSlow);
+                SetMessage($"Too slow, push faster! {bpm:0} BPM", colorSlow);
                 break;
             case CPRFeedbackType.TooFast:
-                SetMessage($"Too fast — slow down! {bpm:0} BPM", colorFast);
+                SetMessage($"Too fast, slow down! {bpm:0} BPM", colorFast);
                 break;
             case CPRFeedbackType.NotEnoughDepth:
                 SetMessage("Push deeper!", colorSlow);
