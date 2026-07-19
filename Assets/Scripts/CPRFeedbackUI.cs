@@ -246,4 +246,34 @@ public class CPRFeedbackUI : MonoBehaviour
         if (summaryCanvasGroup != null)
             summaryCanvasGroup.alpha = 0f;
     }
+
+    public void ShowComparison(
+        CPRSessionSummary round1, string round1Label,
+        CPRSessionSummary round2, string round2Label,
+        string winnerLine)
+    {
+        HidePopup();
+
+        if (summaryPanel != null)
+            summaryPanel.SetActive(true);
+
+        if (summaryCanvasGroup != null)
+        {
+            summaryCanvasGroup.alpha = 1f;
+            summaryCanvasGroup.interactable = true;
+            summaryCanvasGroup.blocksRaycasts = true;
+        }
+
+        if (summaryText != null)
+        {
+            string text =
+                $"{round1Label}\n" +
+                $"Compressions: {round1.totalCompressions}   Accuracy: {round1.GoodPercentage:0}%\n\n" +
+                $"{round2Label}\n" +
+                $"Compressions: {round2.totalCompressions}   Accuracy: {round2.GoodPercentage:0}%\n\n" +
+                $"{winnerLine}";
+
+            summaryText.text = text;
+        }
+    }
 }
