@@ -8,6 +8,8 @@ TagManager:
   - Bandage
   - Victim
   - KneeWound
+  - Hand
+  - Controller
   layers:
   - Default
   - TransparentFX

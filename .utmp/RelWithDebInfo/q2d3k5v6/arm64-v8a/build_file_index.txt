@@ -1,0 +1,3 @@
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/CMakeLists.txt
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/FramePacing/CMakeLists.txt
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/GameActivity/CMakeLists.txt

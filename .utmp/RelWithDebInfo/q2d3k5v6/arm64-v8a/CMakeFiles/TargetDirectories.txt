@@ -1,0 +1,8 @@
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/CMakeFiles/edit_cache.dir
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/CMakeFiles/rebuild_cache.dir
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/GameActivity/CMakeFiles/game.dir
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/FramePacing/CMakeFiles/swappywrapper.dir
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/FramePacing/CMakeFiles/edit_cache.dir
+/home/diogof/Desktop/VR/VR-Prototyping-SoSe26/.utmp/RelWithDebInfo/q2d3k5v6/arm64-v8a/FramePacing/CMakeFiles/rebuild_cache.dir
