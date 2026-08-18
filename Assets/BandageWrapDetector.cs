@@ -49,12 +49,12 @@ public class BandageWrapDetector : MonoBehaviour
         if (!isWrapping || trackedObject == null || isComplete) return;
 
         // Check it's still near the limb
-        float distFromAxis = Vector3.Cross(woundAxis.forward, trackedObject.position - woundAxis.position).magnitude;
+        float distFromAxis = Vector3.Cross(woundAxis.up, trackedObject.position - woundAxis.position).magnitude;
         if (distFromAxis > captureRadius)
             return; // too far from the limb to count as wrapping
 
         Vector3 currentDir = GetProjectedDir(trackedObject.position);
-        float stepAngle = Vector3.SignedAngle(lastDir, currentDir, woundAxis.forward);
+        float stepAngle = Vector3.SignedAngle(lastDir, currentDir, woundAxis.up);
 
         if (Mathf.Abs(stepAngle) <= maxAngleStepPerFrame)
             accumulatedAngle += Mathf.Abs(stepAngle);
@@ -68,7 +68,7 @@ public class BandageWrapDetector : MonoBehaviour
     Vector3 GetProjectedDir(Vector3 worldPos)
     {
         Vector3 offset = worldPos - woundAxis.position;
-        Vector3 projected = Vector3.ProjectOnPlane(offset, woundAxis.forward);
+        Vector3 projected = Vector3.ProjectOnPlane(offset, woundAxis.up);
         return projected.normalized;
     }
 
@@ -78,12 +78,16 @@ public class BandageWrapDetector : MonoBehaviour
         isWrapping = false;
 
         if (trackedObject != null)
-            trackedObject.gameObject.SetActive(false);
+        {
+            var snap = trackedObject.GetComponent<BandageSnap>();
+            if (snap != null) snap.SnapToWound(attachPointOnLimb); // make SnapToWound public
+            trackedObject.gameObject.SetActive(false); // if you still want to swap in a prefab instead
+        }
 
         if (finalAppliedBandagePrefab != null && attachPointOnLimb != null)
         {
             GameObject bandage = Instantiate(finalAppliedBandagePrefab, attachPointOnLimb);
-            bandage.SetActive(true); // <-- force it on, in case the prefab was saved disabled
+            bandage.SetActive(true);
         }
 
         Debug.Log("Bandage wrap complete!");

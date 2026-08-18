@@ -13,20 +13,16 @@ extern void BandageWrapDetector_Update_mA908A36326EB7F9E78A5BF0091E8126BD796AC6F
 extern void BandageWrapDetector_GetProjectedDir_mA592266E7EA97C909F6D12EF016FE0D10B3F55CA (void);
 extern void BandageWrapDetector_CompleteWrap_mFF9CE466CB9892720C44316A9690322F22C7FB9E (void);
 extern void BandageWrapDetector__ctor_mB76980588412A036EE6C98B33818CA0D9A80C0E5 (void);
-extern void BandageController_Awake_m3DA14553F22E955D24E8C571E750FCF86BEEFDD9 (void);
-extern void BandageController_OnEnable_m1206D22B9C9E29220D3E93D7792716E2A78D3440 (void);
-extern void BandageController_OnDisable_m5B5A0DD509502A356C03682A4939E8E6BBF532B5 (void);
-extern void BandageController_OnBandageTipGrabbed_m3FCA09E47218619DE925E39B9A23F169084B3A9F (void);
-extern void BandageController_OnBandageTipReleased_mB68045F5791065FF9FC049A7D11F4DE6668DEB54 (void);
-extern void BandageController__ctor_mAD8B6E8D48C2C3370B9C93DC356C2E9804A35408 (void);
 extern void BandageDispenser_Awake_m0EC71696C0974EA7983151A27EE5F86046460E96 (void);
+extern void BandageDispenser_InitSim_mD2340B7482B64982DBE6465428D2D357D5EB7D04 (void);
+extern void BandageDispenser_FixedUpdate_m28CB44128B15A7FCE2B03A607D5900189BF5DD92 (void);
 extern void BandageDispenser_Update_m9FCA67370B68663347B7BD34ADFE0E377138A853 (void);
-extern void BandageDispenser_UpdateStripMesh_mA4B4718A3C69C488DA93BD730020E193339D2B01 (void);
+extern void BandageDispenser_SimulateRope_m69D077E8D6CB24E68B4C2335F1694B5D2DA60748 (void);
+extern void BandageDispenser_BuildMeshFromPoints_mDF7BD8E700AA714D5F5B7648E8A6CAA0E15D92B6 (void);
 extern void BandageDispenser_CutStrip_mFDC812EDCB4993DCFAB75C6DA5B7B9FA7F9ED4E2 (void);
+extern void BandageDispenser_OnStripGrabbed_mBBBFBE833FAD92398743E4AE0DDB14F15658B7E3 (void);
+extern void BandageDispenser_OnStripReleased_m01C5405DBEF4F66EC40D0CEB699B36C95E31F0D7 (void);
 extern void BandageDispenser__ctor_mDDC9955A60BCC9182F934A7BE7B911C7C440A0FB (void);
-extern void BandageRoll_Update_m2BAF74BB13CEF8B3776DE63D60C478A7F38EF668 (void);
-extern void BandageRoll__ctor_mFC79EA38BE585BFC9B63ABD05719F6F57C242719 (void);
-extern void BandageSnap_Start_m72A59F5CB1341B9D77CD9DB216A86F4C0E3C5E9E (void);
 extern void BandageSnap_OnTriggerEnter_m1E206269ACB741BE3E4DD9F1A9F59F225A771CD3 (void);
 extern void BandageSnap_SnapToWound_m041DD3B894817A03DA1635357AB65A359FF6EDE1 (void);
 extern void BandageSnap__ctor_m2724C098CB6BF355ECDE00533421A6AA663C9E9D (void);
@@ -204,7 +200,7 @@ extern void U3CShuffleClipsU3Ed__14_MoveNext_m21CCDFB14A54E54E7B6E469BF7FE65B865
 extern void U3CShuffleClipsU3Ed__14_System_Collections_Generic_IEnumeratorU3CSystem_ObjectU3E_get_Current_m880ABF34AB841D0D576711951A62BA455B62392A (void);
 extern void U3CShuffleClipsU3Ed__14_System_Collections_IEnumerator_Reset_mD2A7343FBB7E5DF34AE98BF9FB8D217F735BE8AD (void);
 extern void U3CShuffleClipsU3Ed__14_System_Collections_IEnumerator_get_Current_m1125D1E580999FB21DB587118BFFC63501D4328D (void);
-static Il2CppMethodPointer s_methodPointers[197] = 
+static Il2CppMethodPointer s_methodPointers[193] = 
 {
 	BandageWrapDetector_BeginWrap_m45937318F9AA6FAAD96D9BEA8737A04DA11F1782,
 	BandageWrapDetector_EndWrap_mC60866C90EA52DE66471AB0296C546F0C212F4AE,
@@ -212,20 +208,16 @@ static Il2CppMethodPointer s_methodPointers[197] =
 	BandageWrapDetector_GetProjectedDir_mA592266E7EA97C909F6D12EF016FE0D10B3F55CA,
 	BandageWrapDetector_CompleteWrap_mFF9CE466CB9892720C44316A9690322F22C7FB9E,
 	BandageWrapDetector__ctor_mB76980588412A036EE6C98B33818CA0D9A80C0E5,
-	BandageController_Awake_m3DA14553F22E955D24E8C571E750FCF86BEEFDD9,
-	BandageController_OnEnable_m1206D22B9C9E29220D3E93D7792716E2A78D3440,
-	BandageController_OnDisable_m5B5A0DD509502A356C03682A4939E8E6BBF532B5,
-	BandageController_OnBandageTipGrabbed_m3FCA09E47218619DE925E39B9A23F169084B3A9F,
-	BandageController_OnBandageTipReleased_mB68045F5791065FF9FC049A7D11F4DE6668DEB54,
-	BandageController__ctor_mAD8B6E8D48C2C3370B9C93DC356C2E9804A35408,
 	BandageDispenser_Awake_m0EC71696C0974EA7983151A27EE5F86046460E96,
+	BandageDispenser_InitSim_mD2340B7482B64982DBE6465428D2D357D5EB7D04,
+	BandageDispenser_FixedUpdate_m28CB44128B15A7FCE2B03A607D5900189BF5DD92,
 	BandageDispenser_Update_m9FCA67370B68663347B7BD34ADFE0E377138A853,
-	BandageDispenser_UpdateStripMesh_mA4B4718A3C69C488DA93BD730020E193339D2B01,
+	BandageDispenser_SimulateRope_m69D077E8D6CB24E68B4C2335F1694B5D2DA60748,
+	BandageDispenser_BuildMeshFromPoints_mDF7BD8E700AA714D5F5B7648E8A6CAA0E15D92B6,
 	BandageDispenser_CutStrip_mFDC812EDCB4993DCFAB75C6DA5B7B9FA7F9ED4E2,
+	BandageDispenser_OnStripGrabbed_mBBBFBE833FAD92398743E4AE0DDB14F15658B7E3,
+	BandageDispenser_OnStripReleased_m01C5405DBEF4F66EC40D0CEB699B36C95E31F0D7,
 	BandageDispenser__ctor_mDDC9955A60BCC9182F934A7BE7B911C7C440A0FB,
-	BandageRoll_Update_m2BAF74BB13CEF8B3776DE63D60C478A7F38EF668,
-	BandageRoll__ctor_mFC79EA38BE585BFC9B63ABD05719F6F57C242719,
-	BandageSnap_Start_m72A59F5CB1341B9D77CD9DB216A86F4C0E3C5E9E,
 	BandageSnap_OnTriggerEnter_m1E206269ACB741BE3E4DD9F1A9F59F225A771CD3,
 	BandageSnap_SnapToWound_m041DD3B894817A03DA1635357AB65A359FF6EDE1,
 	BandageSnap__ctor_m2724C098CB6BF355ECDE00533421A6AA663C9E9D,
@@ -407,9 +399,9 @@ static Il2CppMethodPointer s_methodPointers[197] =
 extern void CPRSessionSummary_get_GoodPercentage_m301142B257FB82C8F28405D4DBF39792A4D41F85_AdjustorThunk (void);
 static Il2CppTokenAdjustorThunkPair s_adjustorThunks[1] = 
 {
-	{ 0x06000018, CPRSessionSummary_get_GoodPercentage_m301142B257FB82C8F28405D4DBF39792A4D41F85_AdjustorThunk },
+	{ 0x06000014, CPRSessionSummary_get_GoodPercentage_m301142B257FB82C8F28405D4DBF39792A4D41F85_AdjustorThunk },
 };
-static const int32_t s_InvokerIndices[197] = 
+static const int32_t s_InvokerIndices[193] = 
 {
 	3254,
 	3873,
@@ -420,16 +412,12 @@ static const int32_t s_InvokerIndices[197] =
 	3873,
 	3873,
 	3873,
+	3873,
+	3294,
+	3873,
+	3873,
 	3254,
 	3254,
-	3873,
-	3873,
-	3873,
-	3873,
-	3873,
-	3873,
-	3873,
-	3873,
 	3873,
 	3254,
 	3254,
@@ -613,7 +601,7 @@ IL2CPP_EXTERN_C const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule;
 const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule = 
 {
 	"Assembly-CSharp.dll",
-	197,
+	193,
 	s_methodPointers,
 	1,
 	s_adjustorThunks,

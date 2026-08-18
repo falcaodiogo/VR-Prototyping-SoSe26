@@ -7,47 +7,29 @@ public class BandageSnap : MonoBehaviour
     private Rigidbody rb;
     private bool isSnapped = false;
 
-    void Start()
-    {
-        grab = GetComponent<XRGrabInteractable>();
-        rb = GetComponent<Rigidbody>();
-    }
-
     private void OnTriggerEnter(Collider other)
     {
         if (!isSnapped && other.CompareTag("Wound"))
-        ///&& other.CompareTag("KneeWound") && other.CompareTag("Wound_Knee") && other.CompareTag("Wound_Hand") && other.CompareTag("Forehead_Wound")
         {
             SnapToWound(other.transform);
         }
     }
 
-    void SnapToWound(Transform target)
+    public void SnapToWound(Transform target)
+    {
+        grab = GetComponent<XRGrabInteractable>();
+        rb = GetComponent<Rigidbody>();
+        var dispenser = GetComponent<BandageDispenser>();
 
-{
-    isSnapped = true;
+        isSnapped = true;
 
-    if (grab != null) grab.enabled = false;
+        if (dispenser != null) dispenser.enabled = false; // freeze the cloth sim in its final shape
+        if (grab != null) grab.enabled = false;
+        if (rb != null) rb.isKinematic = true;
 
-    if (rb != null) rb.isKinematic = true;
-
-    // Parent to wound
-    transform.SetParent(target);
-
-    // Match position
-    transform.position = target.position;
-
-    // Match rotation automatically
-    transform.rotation = target.rotation * Quaternion.Euler(90f, 0f, 0f);
-
-    // Slight offset to sit on skin properly
-    transform.position += target.forward * 0.002f;
-
-
-}
-
-    // Force local rotation to zero to match the parent's orientation
-    // If the cloth is still vertical, try (90, 0, 0) to flip it flat
-  //  transform.localRotation = Quaternion.Euler(-83.331f, 0, 0); //original
-
+        transform.SetParent(target);
+        transform.position = target.position;
+        transform.rotation = target.rotation * Quaternion.Euler(90f, 0f, 0f);
+        transform.position += target.forward * 0.002f;
+    }
 }
